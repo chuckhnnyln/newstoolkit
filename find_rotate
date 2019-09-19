@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/bash
 # Chuck Henry 2015
 # Version 2
 # Finds PDFs poorly rotated and copies them into another folder.

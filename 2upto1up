@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/bash
 # Takes 2up tifs and splits into 1up tifs FASTER!
 # Chuck Henry 2018
 # Requires Imagemagick installed

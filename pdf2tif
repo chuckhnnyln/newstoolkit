@@ -1,4 +1,4 @@
-#/bin/sh
+#/bin/bash
 # Generates TIF from PDF in existing folders.
 # Chuck Henry 2017
 #Requires Imagemagick and GhostScript installed
