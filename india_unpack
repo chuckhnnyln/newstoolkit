@@ -1,0 +1,72 @@
+#!/bin/bash
+#Script to take unzipped India batches and convert into process.py friendly input.
+#Designed to run on Mac with 'tree' installed.
+
+STARTDIR=$1
+TARGET=$STARTDIR"_unpacked"
+LOAD=$2
+if [[ $LOAD == "" ]]; then LOAD="100%"; fi
+LOG="./"$STARTDIR"_log.txt"
+clear
+
+doreel() {
+  #Establish what this work will work with.
+  STARTDIR=${1%%/*}
+  TARGET=$STARTDIR"_unpacked"
+  REEL=${1##*/}
+
+  #Find the SN folders present.
+  IFS=$'\n'
+  SNLIST=(`find "$STARTDIR/$REEL" -d -maxdepth 1  -mindepth 1 | sort`)
+  unset $ISSUELIST
+  for SN in "${SNLIST[@]}"
+    do
+      SNNUM=${SN##*/}
+      if [ ! -d "./$TARGET/$SNNUM" ]; then mkdir "./$TARGET/$SNNUM"; fi
+      #cp -R "./$STARTDIR/$REEL/$SNNUM/" "./$TARGET/$SNNUM"
+      ISSUELIST=(`find "./$STARTDIR/$REEL/$SNNUM/" -d -maxdepth 1 -mindepth 1`)
+      for ISSUE in "${ISSUELIST[@]}" # for each issue
+        do
+          ISSUENUMBER=${ISSUE##*/}
+          if [ ! -e "./$TARGET/$SNNUM/$ISSUENUMBER" ]
+            then
+              cp -R $ISSUE "./$TARGET/$SNNUM/$ISSUENUMBER"
+              if [ "$?" -ne "0" ]; then echo "Copy failed: "$ISSUE >> $LOG; fi
+            else
+              echo Issue already exists...
+              if [ ! -e "./$TARGET/$SNNUM/duplicates" ]; then mkdir "./$TARGET/$SNNUM/duplicates"; fi
+              cp -R $ISSUE "./$TARGET/$SNNUM/duplicates/$ISSUENUMBER"
+              if [ "$?" -ne "0" ]; then echo "Copy failed: "$ISSUE >> $LOG; fi
+          fi
+      done #Issues
+  done #SN
+}
+export -f doreel
+
+#Setup Environment
+if [ ! -e "./$TARGET" ]; then mkdir "./$TARGET"; fi
+
+#Check to make sure this is what we want to work on
+IFS=$'\n'
+REELLIST=(`find "$STARTDIR" -d -maxdepth 1  -mindepth 1 | sort`)
+for REEL in "${REELLIST[@]}"
+  do
+    echo -n ${REEL##*/}" "
+done
+echo ""
+echo "Are these the reels/boxes?"
+read -rsn1 INPUT
+if [ "$INPUT" != "y" ]; then echo "Quitting!"; exit 1; fi
+echo "Great! Getting started..."
+
+find "$STARTDIR" -d -maxdepth 1  -mindepth 1 | parallel --jobs $LOAD doreel
+
+#Report out to make sure everything unpacked correctly.
+echo ""
+echo "Done! Producing file totals."
+echo -n "Origin: "
+find "$1" -iname "*.pdf" | wc -l
+echo -n "Unpacked: "
+find "$TARGET" -iname "*.pdf" | wc -l
+
+exit 0
