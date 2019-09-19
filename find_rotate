@@ -1,0 +1,39 @@
+#/bin/sh
+# Chuck Henry 2015
+# Version 2
+# Finds PDFs poorly rotated and copies them into another folder.
+# Must have imagemagick and ghostscript installed
+# Para 1 = source folder
+# Para 2 = where to put rejects
+
+SOURCE=$1
+EXT=$2
+REJECTS=$3
+
+if [ ! -d "$REJECTS" ] && [ "$REJECTS" != "" ]; then mkdir $REJECTS; fi
+
+IFS=$'\n'
+FILELIST=(`find "$SOURCE" -iname "*.$EXT"`)
+
+echo "Starting..." > $SOURCE"_log.txt"
+
+for ITEM in "${FILELIST[@]}"
+	do
+		#echo $ITEM
+		GEOMETRY=$(identify -format "%w,%h" "$ITEM")
+		WIDTH="${GEOMETRY%%,*}"
+		HEIGHT="${GEOMETRY#*,}"
+		if [ "$WIDTH" -gt "$HEIGHT" ]
+			then
+			if [ "$REJECTS" != "" ]; then mv $ITEM $REJECTS; fi
+			echo -n "X"
+			echo $ITEM >> $SOURCE"_log.txt"
+		else
+			echo -n "."
+			#echo "Pass"
+		fi
+done
+
+echo "Finishing..." >> $SOURCE"_log.txt"
+
+exit 0

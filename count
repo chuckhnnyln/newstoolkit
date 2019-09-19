@@ -1,0 +1,6 @@
+#/bin/bash
+
+# P1 folder name
+# p2 extension
+
+find "$1" -iname "*.$2" | wc -l

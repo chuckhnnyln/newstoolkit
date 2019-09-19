@@ -1,0 +1,50 @@
+#/bin/bash
+#auto_crop_tifs2 FASTER!
+#Chuck Henry 2018
+
+# Define variables
+SOURCE=$1
+LOAD=$2
+
+if [[ $LOAD == "" ]]; then LOAD=1; fi
+
+workit() {
+  ITEM=$1
+  ROOT=${ITEM%%/*}
+  MID=(`dirname "$ITEM"`)
+  MID=${MID#*/}
+  FILE=(`basename "$ITEM"`)
+  ITEMPATH=$ROOT"_cropped"/$MID/
+  echo -n $ITEMPATH/$FILE
+  if [[ ! -e $ITEMPATH/$FILE ]]; then
+    if [[ ! -d $ROOT"_cropped" ]]; then mkdir $ROOT"_cropped";fi
+    if [[ ! -d $ITEMPATH ]]; then mkdir $ITEMPATH;fi
+
+    #Find width
+    winfo=`convert $ITEM +repage -scale x1! -bordercolor black -border 1 -fuzz 18% -trim -format "%w~%O" info:`
+    width=`echo $winfo | cut -d '~' -f1`
+    offsets=`echo $winfo | cut -d '~' -f2`
+    xoff=`echo $offsets | cut -d+ -f2`
+
+    #Find height
+    hinfo=`convert $ITEM +repage -scale 1x! -bordercolor black -border 1 -fuzz 50% -trim -format "%h~%O" info:`
+    height=`echo $hinfo | cut -d '~' -f1`
+    offsets=`echo $hinfo | cut -d '~' -f2`
+    yoff=`echo $offsets | cut -d+ -f3`
+
+    #Strip the crap off
+    convert $ITEM -crop ${width}x${height}+${xoff}+${yoff} +repage $ITEMPATH/$FILE
+    echo " Done!"
+
+  else
+    echo " Already Done! Skipping!"
+  fi
+}
+export -f workit
+
+#Main program
+echo "Finding tifs..."
+IFS=$'\n'
+find "${SOURCE%/}" -iname "*.tif" | parallel --jobs $LOAD workit
+
+exit 0

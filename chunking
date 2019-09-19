@@ -1,0 +1,42 @@
+#/bin/sh
+#Smaller faster chunking
+# P1 = Source folder
+
+#Run from folder containing target.
+
+ORIGIN=$1
+TARGET="./"$1"-output"
+PAGETHRESHOLD=25000
+CHUNKCOUNT=1
+PDFCOUNT=0
+
+if [[ "$2" != "" ]]; then PAGETHRESHOLD=$2; fi
+
+echo "Using threshold of "$PAGETHRESHOLD
+
+#Create work environment
+
+if [[ ! -d "$TARGET" ]]
+	then
+		echo Target directory DOES NOT exist... creating.
+		mkdir $TARGET
+	else
+		echo Target directory exists.
+	fi
+
+#Splits the output folder into smaller ingestable chunks
+
+echo Building the issues list...
+
+ISSUELIST=(`ls -1 "$ORIGIN" | sort`)
+for ISSUE in "${ISSUELIST[@]}"
+do
+	ISSUEPAGES=(`find "$ORIGIN"/"$ISSUE" -iname "*.pdf" | wc -l`)
+	PDFCOUNT=$(($PDFCOUNT+$ISSUEPAGES))
+	echo $ISSUE"::"$ISSUEPAGES"::"$PDFCOUNT"::"$CHUNKCOUNT
+	if [[ ! -d "$TARGET"/chunk-"$CHUNKCOUNT" ]]; then mkdir "$TARGET"/chunk-"$CHUNKCOUNT"; fi
+	cp -rv "$ORIGIN"/"$ISSUE" "$TARGET"/chunk-"$CHUNKCOUNT"
+	if [[ $PDFCOUNT -gt $PAGETHRESHOLD ]]; then PDFCOUNT=0; CHUNKCOUNT=$(($CHUNKCOUNT+1)); fi
+done
+
+exit 0
