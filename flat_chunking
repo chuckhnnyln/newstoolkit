@@ -1,0 +1,42 @@
+#/bin/bash
+# P1 = Source folder
+
+#Run from folder containing target.
+
+ORIGIN=$1
+TARGET=$1"-output"
+PAGETHRESHOLD=2000
+CHUNKCOUNT=1
+PDFCOUNT=0
+
+if [[ "$2" != "" ]]; then PAGETHRESHOLD=$2; fi
+
+echo "Using threshold of "$PAGETHRESHOLD
+
+#Create work environment
+
+if [[ ! -d "$TARGET" ]]
+	then
+		echo Target directory DOES NOT exist... creating.
+		mkdir $TARGET
+	else
+		echo Target directory exists.
+	fi
+
+#Splits the output folder into smaller ingestable chunks
+
+echo Building the file list...
+
+IFS=$'\n'
+FILELIST=(`ls "$ORIGIN" | sort`)
+
+for FILE in "${FILELIST[@]}"
+do
+	FILECOUNT=$((FILECOUNT+1))
+	echo $FILE : $FILECOUNT : $CHUNKCOUNT
+	if [[ ! -d "$TARGET"/chunk-"$CHUNKCOUNT" ]]; then mkdir "$TARGET"/chunk-"$CHUNKCOUNT"; fi
+	cp -rv $ORIGIN/$FILE $TARGET/"chunk-"$CHUNKCOUNT"/"
+	if [[ $FILECOUNT -gt $PAGETHRESHOLD ]]; then FILECOUNT=0; CHUNKCOUNT=$(($CHUNKCOUNT+1)); fi
+done
+
+exit 0

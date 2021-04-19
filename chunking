@@ -1,11 +1,10 @@
 #/bin/bash
-#Smaller faster chunking
 # P1 = Source folder
 
 #Run from folder containing target.
 
 ORIGIN=$1
-TARGET="./"$1"-output"
+TARGET=$1"-output"
 PAGETHRESHOLD=25000
 CHUNKCOUNT=1
 PDFCOUNT=0
@@ -28,15 +27,28 @@ if [[ ! -d "$TARGET" ]]
 
 echo Building the issues list...
 
-ISSUELIST=(`ls -1 "$ORIGIN" | sort`)
+ISSUELIST=(`find "$ORIGIN" -type d -mindepth 2 | sort`)
 for ISSUE in "${ISSUELIST[@]}"
 do
-	ISSUEPAGES=(`find "$ORIGIN"/"$ISSUE" -iname "*.pdf" | wc -l`)
+	ISSUEPAGES=(`find "$ISSUE" -iname "*.pdf" | wc -l`)
 	PDFCOUNT=$(($PDFCOUNT+$ISSUEPAGES))
+	SHIP=(`echo $ISSUE | cut -d "/" -f1`)
+	TITLE=(`echo $ISSUE | cut -d "/" -f2`)
+	DATE=(`echo $ISSUE | cut -d "/" -f3`)
 	echo $ISSUE"::"$ISSUEPAGES"::"$PDFCOUNT"::"$CHUNKCOUNT
+	FPATH=(`echo $SHIP/$TITLE/$DATE`)
 	if [[ ! -d "$TARGET"/chunk-"$CHUNKCOUNT" ]]; then mkdir "$TARGET"/chunk-"$CHUNKCOUNT"; fi
-	cp -rv "$ORIGIN"/"$ISSUE" "$TARGET"/chunk-"$CHUNKCOUNT"
+	if [[ ! -d "$TARGET"/chunk-"$CHUNKCOUNT"/"$TITLE"/"$DATE" ]]; then mkdir -p "$TARGET"/chunk-"$CHUNKCOUNT"/"$TITLE"/"$DATE"; fi
+	cp -rv $FPATH $TARGET"/chunk-"$CHUNKCOUNT"/"$TITLE
 	if [[ $PDFCOUNT -gt $PAGETHRESHOLD ]]; then PDFCOUNT=0; CHUNKCOUNT=$(($CHUNKCOUNT+1)); fi
 done
+
+#Report out to make sure everything unpacked correctly.
+echo ""
+echo "Done! Producing file totals."
+echo -n "Origin: "
+find "$ORIGIN" -iname "*.pdf" | wc -l
+echo -n "Unpacked: "
+find "$TARGET" -iname "*.pdf" | wc -l
 
 exit 0

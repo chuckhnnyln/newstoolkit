@@ -1,0 +1,92 @@
+#/bin/sh
+# Chuck Henry 2015#/bin/sh
+# Chuck Henry 2015
+# Process Avantage Format to Chronam/Open-Oni Format
+# Requires xml2 package installed
+
+# Para 1 = Source Folder (Directory name with no spaces)
+# Para 2 = Output Folder (Directory name with no spaces)
+
+SOURCE=$1
+OUTPUT=$2
+
+echo START PROCESSING > _advantage_convert_error.log
+
+#Functions to do stuff
+function foldercreate { 
+	# Parameters =  TITLE DATE
+	if [ ! -d "$OUTPUT/$1" ]
+		then
+			mkdir -v $OUTPUT/$1
+		fi
+	if [ ! -d "$OUTPUT/$1/$2" ]
+		then
+			mkdir -v $OUTPUT/$1/$2
+		fi
+}
+
+#Finds the XMLs and reads into an array.
+find "$SOURCE" -iname '*.xml' > _advantage_convert_xml.txt
+IFS=$'\n'
+while read FILE; do
+    FILELIST+=($FILE)
+done < _advantage_convert_xml.txt
+rm _advantage_convert_xml.txt
+
+#Does the following for each XML found.
+for XML in "${FILELIST[@]}"
+	do
+		echo START $XML >> _advantage_convert_error.log
+		FILELINES=()
+
+		#Extract file path from XML name.
+		RAWPATH=${XML%@#@1.xml}
+		FILEPATH=${RAWPATH//@#@//}
+		
+		#Convert XML to flat file
+		cat $XML | xml2 > _advantage_convert_flat.txt
+
+		#Read flat file into an array.
+		IFS=$'\n'
+		while read LINE; do
+    		FILELINES+=($LINE)
+		done < _advantage_convert_flat.txt
+		
+		rm _advantage_convert_flat.txt
+
+		#Do stuff with the contents of each flat file.
+		for ITEM in "${FILELINES[@]}"
+			do
+				TARGET=${ITEM##/*/}
+				KEY=${TARGET%=*}
+				case $KEY in
+					filename)
+						FILENAME=${TARGET#*=}
+						;;
+					title)
+						RAWTITLE=${TARGET#*=}
+						TITLE=${RAWTITLE// /-}
+						;;
+					date)
+						RAWDATE=${TARGET#*=}
+						DATE=${RAWDATE//-/}
+						;;
+					pagenum)
+						RAWPAGENUM=${TARGET#*=}
+						PAGENUM=`printf "%03d" $RAWPAGENUM`
+						foldercreate $TITLE $DATE
+						if [ ! -e $FILEPATH/$FILENAME.pdf ]
+							then
+								echo "FILE-NOT-FOUND: "$FILEPATH/$FILENAME.pdf >> _advantage_convert_error.log
+								echo "SHOULD BE: "$TITLE-$DATE-$PAGENUM >> _advantage_convert_error.log
+							else
+								cp -v $FILEPATH/$FILENAME.pdf $OUTPUT/$TITLE/$DATE/$TITLE-$DATE-$PAGENUM.pdf
+						fi
+						;;
+				esac
+		done
+done
+
+echo END >> _advantage_convert_error.log
+
+exit 0

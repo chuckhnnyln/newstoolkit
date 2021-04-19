@@ -60,8 +60,8 @@ for ITEM in "${FILELIST[@]}"
 			mv -v $ITEM $FOLDER/$DATE/
 		else
 			LOOP=$(($LOOP+1))
-			echo $LOOP : $DATE
-			if [ $LOOP -eq "50" ]
+			echo $LOOP : $DATE : $FILENAME
+			if [ $LOOP -eq "25" ]
 				then
 				break
 			fi
