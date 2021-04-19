@@ -1,0 +1,157 @@
+#/bin/bash
+# Wapner
+# Chuck Henry 2018
+# This script analyzes a folder of PDFs and evaluates them for readiness for easy use in NYSHN.
+
+# Help for the clueless
+if [ -z "$1" ]
+	then
+	echo "Parameter 1 = target directory"
+	echo "Parameter 2 = operation mode (choose one!)"
+	echo "r = report (default), displays to screen success vs failure on criteria en masse"
+	echo "l = report & log, same as report plus writes a logfile with test results for each pdf"
+	echo "s = report & log & sort, same as report & log plus moves each pdf into criteria folders"
+	exit 1
+fi
+
+# Define variables
+SOURCE=$1
+OPTIONS=$2
+LOWER=0.48731
+UPPER=0.87500
+MAXSIZE=5242880
+DIMWIDE=5000
+declare -a RESULTS
+FAILDIM=0
+FAILOCR=0
+FAILMULTI=0
+FAILLAYER=0
+FAILSIZE=0
+FAILNAME=0
+
+if [[ $OPTIONS == "" ]]; then OPTIONS="r"; fi
+
+#Functions
+Moveit ()
+{ #$1 folder, $2item
+if [[ ! -d $SOURCE"_rejects" ]]; then mkdir $SOURCE"_rejects";fi
+if [[ -e $2 ]]
+then
+	FILEPATH=(`dirname "$2"`)
+	FILEPATH=${FILEPATH/$SOURCE/$SOURCE"_rejects/"$1}
+	mkdir -p $FILEPATH
+	mv $2 $FILEPATH
+fi
+}
+
+#Get started!
+if [[ ! -d "temp" ]]; then mkdir "temp";fi
+
+echo "Finding pdfs..."
+IFS=$'\n'
+FILELIST=(`find "$SOURCE" -iname "*.pdf"`)
+
+if [ -z "$FILELIST" ]
+	then
+		echo "No pdfs found!"
+		exit 1
+fi
+
+FILECOUNT=${#FILELIST[@]}
+echo "Found "$FILECOUNT" pdfs"
+
+if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]
+	then
+		echo "Creating log."
+		if [[ -e $SOURCE"_log.txt" ]]; then rm $SOURCE"_log.txt";fi
+fi
+
+INDEX=0
+for ITEM in "${FILELIST[@]}"
+	do
+		echo "Evaluating "$((INDEX+1))" of "$FILECOUNT": "$ITEM
+		#Dimension Check
+		WIDTH=(`pdfinfo "$ITEM" | grep "Page size" | awk '{print $3}'`)
+		HEIGHT=(`pdfinfo "$ITEM" | grep "Page size" | awk '{print $5}'`)
+		SWIDE=$(echo "$WIDTH > $DIMWIDE" | bc -l)
+		RATIO=$(echo "$WIDTH/$HEIGHT" | bc -l)
+		SUPPER=$(echo "$RATIO>$UPPER" | bc -l)
+		SLOWER=$(echo "$RATIO<$LOWER" | bc -l)
+		if [[ $SUPPER = 1 || $SLOWER = 1 || $SWIDE = 1 ]]
+		then
+			FAILDIM=$(($FAILDIM+1))
+			if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "1-Dimension,"$ITEM","$WIDTH"x"$HEIGHT":"$RATIO >> $SOURCE"_log.txt";fi
+		fi
+		#OCR Check
+		ISFONTS=`pdffonts $ITEM | tail -n +3 | cut -d' ' -f1 | sort | uniq`
+		if [ "$ISFONTS" = '' ] || [ "$ISFONTS" = '[none]' ];
+			then
+				FAILOCR=$(($FAILOCR+1))
+				if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "2-OCR,"$ITEM >> $SOURCE"_log.txt";fi
+		fi
+		#Multipage Check
+		ISMULTIPAGE=$(pdfinfo $ITEM | grep Pages | awk '{print $2}')
+		if [[ "$ISMULTIPAGE" != "1" ]]
+			then
+				FAILMULTI=$(($FAILMULTI+1))
+				if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "3-Multipage,"$ITEM >> $SOURCE"_log.txt";fi
+		fi
+		#Multiimage Check
+		ISMULTIIMAGE=(`pdfimages -list $ITEM temp/temp | awk '{print $3}' | grep image | wc -l`)
+		ISMULTIIMAGE=(`echo $ISMULTIIMAGE | xargs`)
+		if [[ "$ISMULTIIMAGE" != "$ISMULTIPAGE" ]]
+			then
+				FAILLAYER=$(($FAILLAYER+1))
+				if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "4-Layered,"$ITEM >> $SOURCE"_log.txt";fi
+		fi
+		#File size Check
+		FILESIZE=(`ls -l $ITEM | awk '{print $5}'`)
+		if [[ $FILESIZE -gt $MAXSIZE || $FILESIZE -lt 51200 ]]
+			then
+				FAILSIZE=$(($FAILSIZE+1))
+				if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "5-Filesize,"$ITEM","$FILESIZE >> $SOURCE"_log.txt";fi
+		fi
+		#Date Name Check
+		DATENAME=(`echo $ITEM | grep -E '[0-9]{8}'`)
+		if [[ "$DATENAME" == "" ]]
+			then
+				FAILNAME=$(($FAILNAME+1))
+				if [[ $OPTIONS == "l" || $OPTIONS == "s" ]]; then echo "6-Datename,"$ITEM >> $SOURCE"_log.txt";fi
+		fi
+		#Wrap up evaluation
+		INDEX=$(($INDEX+1))
+done
+#Cleanup log
+sort $SOURCE"_log.txt" > temp.txt
+rm $SOURCE"_log.txt"
+mv temp.txt $SOURCE"_log.txt"
+#Sorting Hat!
+if [[ $OPTIONS == "s" ]]
+then
+	IFS=$'\n'
+	for LINE in $(cat $SOURCE"_log.txt")
+		do
+			OPFOLDER=${LINE%%,*} #Find operation
+			ITEM=${LINE#*,} #Remove operation
+			ITEM=${ITEM%,*} #Extra info
+			Moveit $OPFOLDER $ITEM
+	done
+fi
+rm -R temp
+
+#Report RESULTS
+echo "Results:"
+echo "Dimension Check: "$FAILDIM" failed"
+echo "OCR Check: "$FAILOCR" failed"
+echo "Multipage Check: "$FAILMULTI" failed"
+echo "Layered Image Check: "$FAILLAYER" failed"
+echo "Filesize Check: "$FAILSIZE" failed"
+echo "Date Name Check: "$FAILNAME" failed"
+echo ""
+FAILTOTAL=$(($FAILDIM + $FAILOCR + $FAILNAME + $FAILMULTI + $FAILLAYER))
+POSSTOTAL=$(($FILECOUNT*5))
+SCORETOTAL=$(($POSSTOTAL-$FAILTOTAL))
+echo $FAILTOTAL" fails from "$POSSTOTAL" total tests."
+FINAL=(`echo "($SCORETOTAL/$POSSTOTAL)*100" | bc -l`)
+echo "Final score: "${FINAL%%.*}"%"
+exit 0
