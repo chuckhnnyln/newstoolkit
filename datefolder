@@ -1,70 +1,40 @@
-#/bin/bash
+#!/usr/bin/env python3
+import os
+import sys
 
-# Parameter 1 = target directory
-# Parameter 2 = file ext
-# Parameter 3 = first character of date
-# Parameter 4 = test!
+if len(sys.argv)<4:
+    print("Usage: datefolder [folder] [extension] [# first character of date] [options]")
+    print("options: (t) test, (-) strip -, (e)ditions 8+3")
+    quit()
 
-FOLDER=$1
-EXT=$2
-START=$3
-LOOP=0
-STRIP=0
-DATECHAR=8
+options = 0
+date_length = 8
+test_count = 0
+test_length = 3
+root_dir = sys.argv[1]
+extension = sys.argv[2]
+first_char = int(sys.argv[3])-1
+if len(sys.argv) == 5: options = sys.argv[4]
+if options == "-": date_length = 10
 
-if [ -z "$1" ]
-	then
-	echo "Parameter 1 = target directory"
-	echo "Parameter 2 = file ext"
-	echo "Parameter 3 = first character of date"
-	echo "Parameter 4 = (t), (-) strip -, (e)ditions 8+3"
-	exit 1
-fi
-
-if [[ $4 == *t* ]]
-	then
-		MODE="test"
-fi
-
-if [[ $4 == *-* ]]
-	then
-		STRIP=1
-fi
-
-if [[ $4 == *e* ]]
-	then
-		DATECHAR=10
-fi
-
-echo Loading array...
-IFS=$'\n'
-while read FILE; do
-    FILELIST+=($FILE)
-	done < <(find "$FOLDER" -maxdepth 1 -iname "*.$EXT")
-
-for ITEM in "${FILELIST[@]}"
-	do
-		FILENAME=$(basename $ITEM)
-		if [ $STRIP == "1" ]
-			then
-				FILENAME=${FILENAME//-/}
-		fi
-		DATE=${FILENAME:$START:$DATECHAR}
-		if [ -z "$MODE" ]
-			then
-			if [ ! -d "$FOLDER/$DATE" ]
-			then
-				echo Making $FOLDER/$DATE
-				mkdir $FOLDER/$DATE
-			fi
-			mv -v $ITEM $FOLDER/$DATE/
-		else
-			LOOP=$(($LOOP+1))
-			echo $LOOP : $DATE : $FILENAME
-			if [ $LOOP -eq "25" ]
-				then
-				break
-			fi
-		fi
-	done
-exit 0
+last_char = int(first_char) + 8
+for root, dirs, files in os.walk(root_dir):
+    for item in files:
+        if test_count > test_length: break
+        if item == ".DS_Store":
+            os.remove(os.path.join(root,item))
+            break
+        if '._' in item:
+            os.remove(os.path.join(root,item))
+            break
+        file_date = item[first_char:last_char]
+        file_date = file_date.replace('-','')
+        if options == "t":
+            print(f"{file_date} : {item}")
+            test_count = test_count + 1
+        else:
+            if os.path.exists(os.path.join(root_dir,file_date)):
+                os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))
+            else:
+                os.mkdir(os.path.join(root_dir,file_date))
+                os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))

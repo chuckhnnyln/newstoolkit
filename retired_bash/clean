@@ -1,0 +1,13 @@
+#/bin/bash
+# Para 1 = Target folder
+
+echo "Removing MAC resources forks..."
+find "$1" -iname "._*"  -exec rm {} \;
+echo "Removing MAC DS_Stores..."
+find "$1" -iname ".DS_Store"  -exec rm {} \;
+echo "Removing Windows Thumbnails"
+find "$1" -iname "Thumbs.db"  -exec rm {} \;
+echo "Removing Icon files"
+find "$1" -iname "Icon*"  -exec rm {} \;
+
+exit 0

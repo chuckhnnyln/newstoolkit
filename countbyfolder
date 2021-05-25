@@ -1,17 +1,24 @@
-#/bin/bash
-# Para 1 = Target folder
-# Para 2 = File Extension
+#!/usr/bin/env python3
+import os
+import sys
 
-SOURCE=$1
-IFS=$'\n'
-SOURCEDIRS=$(ls -r $SOURCE|sort)
-TYPE=$2
-TOTAL=0
+if len(sys.argv)==1 or len(sys.argv)==2:
+    print("No directory or extention specified!")
+    print("count [directory] [file extenstion]")
+    print("IE: count MyFolder pdf")
+    quit()
 
-for DIR in $SOURCEDIRS
-do
-	DIRCOUNT=$(find "$SOURCE/$DIR" -iname "*.$TYPE" | wc -l)
-	echo $DIR" "$DIRCOUNT
-	TOTAL=$((TOTAL+DIRCOUNT))
-done
-echo Total $TOTAL
+root_dir = sys.argv[1]
+extension = sys.argv[2]
+root_count = 0
+
+for folder in os.listdir(root_dir):
+    file_count = 0
+    for root, dirs, files in os.walk(os.path.join(root_dir,folder)):
+        for name in files:
+            if name.endswith(extension):
+                file_count = file_count+1
+    print(f"{file_count} : {folder}")
+    root_count = root_count + file_count
+
+print(f"{root_count} total files with the extension {extension}.")

@@ -1,6 +1,20 @@
-#/bin/bash
+#!/usr/bin/env python3
+import os
+import sys
 
-# P1 folder name
-# p2 extension
+if len(sys.argv)==1 or len(sys.argv)==2:
+    print("No directory or extention specified!")
+    print("count [directory] [file extenstion]")
+    print("IE: count MyFolder pdf")
+    quit()
 
-find "$1" -iname "*.$2" | wc -l
+root_dir = sys.argv[1]
+extension = sys.argv[2]
+file_count = 0
+
+for root, dirs, files in os.walk(root_dir):
+    for name in files:
+        if name.endswith(extension):
+            file_count = file_count+1
+
+print(f"{file_count} files with the extension {extension}.")

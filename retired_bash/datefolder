@@ -1,0 +1,70 @@
+#/bin/bash
+
+# Parameter 1 = target directory
+# Parameter 2 = file ext
+# Parameter 3 = first character of date
+# Parameter 4 = test!
+
+FOLDER=$1
+EXT=$2
+START=$3
+LOOP=0
+STRIP=0
+DATECHAR=8
+
+if [ -z "$1" ]
+	then
+	echo "Parameter 1 = target directory"
+	echo "Parameter 2 = file ext"
+	echo "Parameter 3 = first character of date"
+	echo "Parameter 4 = (t), (-) strip -, (e)ditions 8+3"
+	exit 1
+fi
+
+if [[ $4 == *t* ]]
+	then
+		MODE="test"
+fi
+
+if [[ $4 == *-* ]]
+	then
+		STRIP=1
+fi
+
+if [[ $4 == *e* ]]
+	then
+		DATECHAR=10
+fi
+
+echo Loading array...
+IFS=$'\n'
+while read FILE; do
+    FILELIST+=($FILE)
+	done < <(find "$FOLDER" -maxdepth 1 -iname "*.$EXT")
+
+for ITEM in "${FILELIST[@]}"
+	do
+		FILENAME=$(basename $ITEM)
+		if [ $STRIP == "1" ]
+			then
+				FILENAME=${FILENAME//-/}
+		fi
+		DATE=${FILENAME:$START:$DATECHAR}
+		if [ -z "$MODE" ]
+			then
+			if [ ! -d "$FOLDER/$DATE" ]
+			then
+				echo Making $FOLDER/$DATE
+				mkdir $FOLDER/$DATE
+			fi
+			mv -v $ITEM $FOLDER/$DATE/
+		else
+			LOOP=$(($LOOP+1))
+			echo $LOOP : $DATE : $FILENAME
+			if [ $LOOP -eq "25" ]
+				then
+				break
+			fi
+		fi
+	done
+exit 0

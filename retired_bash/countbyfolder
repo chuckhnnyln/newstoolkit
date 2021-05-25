@@ -1,0 +1,17 @@
+#/bin/bash
+# Para 1 = Target folder
+# Para 2 = File Extension
+
+SOURCE=$1
+IFS=$'\n'
+SOURCEDIRS=$(ls -r $SOURCE|sort)
+TYPE=$2
+TOTAL=0
+
+for DIR in $SOURCEDIRS
+do
+	DIRCOUNT=$(find "$SOURCE/$DIR" -iname "*.$TYPE" | wc -l)
+	echo $DIR" "$DIRCOUNT
+	TOTAL=$((TOTAL+DIRCOUNT))
+done
+echo Total $TOTAL
