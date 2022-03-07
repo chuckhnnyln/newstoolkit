@@ -1,27 +1,43 @@
-#/bin/bash
-# Generates TIF from PDF in existing folders.
-# Chuck Henry 2017
-#Requires Imagemagick and GhostScript installed
+#!/usr/bin/env python3
+# Chuck Henry 2022
+# Requires Poppler and pdf2image installed, written on MacOS
+# Creates a tif of each PDF file
 
-TARGETDIR=$1
+import os
+import sys
+from subprocess import call
+from multiprocessing.dummy import Pool as ThreadPool
+from pdf2image import convert_from_path
 
-workit() {
-	FILE=$1
-	FILESANSEXT=${FILE%.*}
-	echo -n "Working on: "$FILE
-	if [[ ! -e $FILESANSEXT.tif ]]
-	then
-		convert $FILE -density 300 -resize 2500x -type palette $FILESANSEXT.tif
-		echo " Done!"
-	else
-		echo " TIF already created."
-	fi
-}
-export -f workit
+def OcrFile(ItemPath):
+    ItemName = os.path.basename(ItemPath)
+    ItemNameNoExt = os.path.splitext(ItemName)[0]
+    ItemPathNoFile = os.path.dirname(ItemPath)
+    #print(f'Converting {ItemName} to tif.') #Python3
+    print('Converting ' + ItemName + ' to tif.') #Python2
+    images = convert_from_path(ItemPath)
+    images[0].save(os.path.join(ItemPathNoFile,ItemNameNoExt + '.tif'),'tiff', dpi=(300, 300))
 
-#Main program
-echo "Creating Inventory..."
-IFS=$'\n'
-find "${TARGETDIR%/}" -iname "*.pdf" | parallel --jobs 3 workit
+if __name__ == '__main__':
 
-exit 0
+    if len(sys.argv) == 1:
+        print("No directory or extension specified!")
+        print("pdf2tif [directory]")
+        print("IE: pdf2tif MyFolder")
+        quit()
+
+    RootDir = sys.argv[1]
+    Extension = 'pdf'
+
+    # Find target files
+    FileList=[]
+    for root, dirs, files in os.walk(RootDir):
+        for Item in files:
+            if Item.endswith(Extension):
+                FileList.append(os.path.join(root,Item))
+
+    # Pass the file list to workers to complete
+    pool = ThreadPool(6)
+    pool.map(OcrFile, FileList)
+    pool.close()
+    pool.join()

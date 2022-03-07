@@ -1,0 +1,27 @@
+#/bin/bash
+# Generates TIF from PDF in existing folders.
+# Chuck Henry 2017
+#Requires Imagemagick and GhostScript installed
+
+TARGETDIR=$1
+
+workit() {
+	FILE=$1
+	FILESANSEXT=${FILE%.*}
+	echo -n "Working on: "$FILE
+	if [[ ! -e $FILESANSEXT.tif ]]
+	then
+		convert $FILE -density 300 -resize 2500x -type palette $FILESANSEXT.tif
+		echo " Done!"
+	else
+		echo " TIF already created."
+	fi
+}
+export -f workit
+
+#Main program
+echo "Creating Inventory..."
+IFS=$'\n'
+find "${TARGETDIR%/}" -iname "*.pdf" | parallel --jobs 3 workit
+
+exit 0
