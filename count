@@ -4,17 +4,27 @@ import sys
 
 if len(sys.argv)==1 or len(sys.argv)==2:
     print("No directory or extention specified!")
-    print("count [directory] [file extenstion]")
-    print("IE: count MyFolder pdf")
+    print("count [directory] [file extenstion] [search phrase]")
+    print("IE: count MyFolder pdf bob")
     quit()
 
 root_dir = sys.argv[1]
 extension = sys.argv[2]
+search = []
+if len(sys.argv) == 4:
+    search = sys.argv[3]
 file_count = 0
 
 for root, dirs, files in os.walk(root_dir):
     for name in files:
         if name.endswith(extension):
-            file_count = file_count+1
-
-print(f"{file_count} files with the extension {extension}.")
+            if len(search) > 0:
+                if search in name:
+                    file_count = file_count+1
+            else:
+                file_count = file_count+1
+                
+if len(search) > 0:
+    print(f"{file_count} files with the extension '{extension}' and name contains '{search}'")
+else:
+    print(f"{file_count} files with the extension '{extension}'.")

@@ -1,37 +1,59 @@
-#/bin/bash
-# Takes 2up tifs and splits into 1up tifs FASTER!
-# Chuck Henry 2018
-# Requires Imagemagick installed
+#!/usr/bin/env python3
+from PIL import Image
+import sys
+import os
+import shutil
+import datetime
+import multiprocessing
 
-SOURCE=$1
-LOAD=$2
-RATIO=1.00000000000000
+def split(original_path, output_path, name, extension):
+    percent = 53
+    ratio = 1.25
+    base_name = name.replace("." + extension, "")
+    if not os.path.isdir(output_path): os.makedirs(output_path)
+    with Image.open(original_path + "/"+ name) as image:
+        width, height = image.size
+        image_ratio = width / height
+        if image_ratio > ratio:
+            window = round(width*percent/100)
+            side1crop = [0, 0, window, height]
+            side1 = image.crop(side1crop)
+            side1.save(output_path + "/" + base_name + "_1." + extension)
+            side2crop = [(width-window), 0, width, height]
+            side2 = image.crop(side2crop)
+            side2.save(output_path + "/" + base_name + "_2." + extension)
+        else:
+            shutil.copy2(original_path + "/"+ name, output_path + "/" + name)
 
-if [[ $LOAD == "" ]]; then LOAD=1; fi
+if __name__ == "__main__":
 
-workit() {
-  FILE=$1
-  FILESANSEXT=${FILE%.*}
-  GEOMETRY=$(identify -format "%w,%h" "$FILE")
-  WIDTH="${GEOMETRY%%,*}"
-  HEIGHT="${GEOMETRY#*,}"
-  FACTOR=(`awk "BEGIN {print $WIDTH / $HEIGHT}"`)
-  if (( $(echo "$FACTOR $RATIO" | awk '{print ($1 > $2)}') ))
-  then
-    echo $FILE" "$WIDTH"x"$HEIGHT" F:"$FACTOR" Splitting"
-    convert $FILE -gravity West -crop '53%x100%' $FILESANSEXT'_01.'tif &
-    convert $FILE -gravity East -crop '53%x100%' $FILESANSEXT'_02.'tif &
-    wait
-    rm $FILE
-  else
-    echo $FILE" "$WIDTH"x"$HEIGHT" F:"$FACTOR" Skipping"
-  fi
-}
-export -f workit
+    if len(sys.argv) < 3:
+        print("No directory or extention specified!")
+        print("2upto1up [directory] [file extenstion]")
+        print("IE: 2upto1up MyFolder png")
+        quit()
 
-#Main program
-echo "Finding tifs..."
-IFS=$'\n'
-find "${SOURCE%/}" -iname "*.tif" | parallel --jobs $LOAD workit
+    begin_time = datetime.datetime.now()
+    target_dir = sys.argv[1]
+    extension = sys.argv[2]
+    output_dir = target_dir + "_split"
+    jobs = []
+    count = 0
+    allowed_ext = ["png", "tif", "jpg", "bmp"]
 
-exit 0
+    if extension not in allowed_ext:
+        print("Not a splitable file type!")
+        print("Allowed extentions: png, tif, jpg")
+        quit()
+
+    for root, dirs, files in os.walk(target_dir):
+        for name in files:
+            if name.endswith(extension):
+                output_path = root.replace(target_dir, output_dir)
+                split(root, output_path, name, extension)
+                count = count + 1
+
+    elapsed = datetime.datetime.now() - begin_time
+    print("Elapsed time: ",elapsed)
+    print("Files processed: ", count)
+    print("Time per file: ",elapsed / count)

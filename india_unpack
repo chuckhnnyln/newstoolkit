@@ -1,72 +1,64 @@
-#!/bin/bash
-#Script to take unzipped India batches and convert into process.py friendly input.
-#Designed to run on Mac with 'tree' installed.
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
 
-STARTDIR=$1
-TARGET=$STARTDIR"_unpacked"
-LOAD=$2
-if [[ $LOAD == "" ]]; then LOAD="100%"; fi
-LOG="./"$STARTDIR"_log.txt"
-clear
+def pdfcount(target):
+    file_count = 0
+    for root, dirs, files in os.walk(target):
+        for name in files:
+            if name.endswith('pdf'):
+                file_count = file_count + 1
+    return file_count
 
-doreel() {
-  #Establish what this work will work with.
-  STARTDIR=${1%%/*}
-  TARGET=$STARTDIR"_unpacked"
-  REEL=${1##*/}
+def clean(root_dir):
+    junk = ('._', '.DS_Store', 'Thumbs.db')
+    junk_count = 0
 
-  #Find the SN folders present.
-  IFS=$'\n'
-  SNLIST=(`find "$STARTDIR/$REEL" -d -maxdepth 1  -mindepth 1 | sort`)
-  unset $ISSUELIST
-  for SN in "${SNLIST[@]}"
-    do
-      SNNUM=${SN##*/}
-      if [ ! -d "./$TARGET/$SNNUM" ]; then mkdir "./$TARGET/$SNNUM"; fi
-      #cp -R "./$STARTDIR/$REEL/$SNNUM/" "./$TARGET/$SNNUM"
-      ISSUELIST=(`find "./$STARTDIR/$REEL/$SNNUM/" -d -maxdepth 1 -mindepth 1`)
-      for ISSUE in "${ISSUELIST[@]}" # for each issue
-        do
-          ISSUENUMBER=${ISSUE##*/}
-          if [ ! -e "./$TARGET/$SNNUM/$ISSUENUMBER" ]
-            then
-              cp -R $ISSUE "./$TARGET/$SNNUM/$ISSUENUMBER"
-              if [ "$?" -ne "0" ]; then echo "Copy failed: "$ISSUE >> $LOG; fi
-            else
-              echo Issue already exists...
-              if [ ! -e "./$TARGET/$SNNUM/duplicates" ]; then mkdir "./$TARGET/$SNNUM/duplicates"; fi
-              cp -R $ISSUE "./$TARGET/$SNNUM/duplicates/$ISSUENUMBER"
-              if [ "$?" -ne "0" ]; then echo "Copy failed: "$ISSUE >> $LOG; fi
-          fi
-      done #Issues
-  done #SN
-}
-export -f doreel
+    for root, dirs, files in os.walk(root_dir):
+        for name in files:
+            for search in junk:
+                if search in name:
+                    junk_count = junk_count+1
+                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
 
-#Setup Environment
-if [ ! -e "./$TARGET" ]; then mkdir "./$TARGET"; fi
+    print('Removed ' + str(junk_count) + ' junk files.')
 
-#Check to make sure this is what we want to work on
-IFS=$'\n'
-REELLIST=(`find "$STARTDIR" -d -maxdepth 1  -mindepth 1 | sort`)
-for REEL in "${REELLIST[@]}"
-  do
-    echo -n ${REEL##*/}" "
-done
-echo ""
-echo "Are these the reels/boxes?"
-read -rsn1 INPUT
-if [ "$INPUT" != "y" ]; then echo "Quitting!"; exit 1; fi
-echo "Great! Getting started..."
-
-find "$STARTDIR" -d -maxdepth 1  -mindepth 1 | parallel --jobs $LOAD doreel
-
-#Report out to make sure everything unpacked correctly.
-echo ""
-echo "Done! Producing file totals."
-echo -n "Origin: "
-find "$1" -iname "*.pdf" | wc -l
-echo -n "Unpacked: "
-find "$TARGET" -iname "*.pdf" | wc -l
-
-exit 0
+if __name__ == "__main__":
+    original_dir = sys.argv[1]
+    working_dir = original_dir + "_unpacked"
+    duplicate_dir = original_dir + "_duplicates"
+    if not os.path.isdir(original_dir):
+        print("Target folder not found!")
+        quit()
+    clean(original_dir)
+    if not os.path.isdir(working_dir):
+        os.mkdir(working_dir)
+    for folder in os.listdir(original_dir):
+        if os.path.isdir(os.path.join(original_dir,folder)):
+            dash = folder.find('-')
+            slug = folder[0:dash]
+            if not os.path.isdir(os.path.join(working_dir,slug)):
+                os.mkdir(os.path.join(working_dir,slug))
+            for datefolder in os.listdir(os.path.join(original_dir,folder)):
+                if os.path.isdir(os.path.join(original_dir,folder,datefolder)):
+                    if os.path.isdir(os.path.join(working_dir,slug,datefolder)):
+                        print("Duplicate folder found. " + os.path.join(working_dir,slug,datefolder))
+                        if not os.path.isdir(duplicate_dir):
+                            os.mkdir(duplicate_dir)
+                        shutil.copytree(os.path.join(original_dir,folder,datefolder), os.path.join(duplicate_dir,folder,datefolder))
+                    else:
+                        print("Copying: " + os.path.join(original_dir,folder,datefolder))
+                        shutil.copytree(os.path.join(original_dir,folder,datefolder), os.path.join(working_dir,slug,datefolder))
+    origin_count = pdfcount(original_dir)
+    unpack_count = pdfcount(working_dir)
+    dup_count = 0
+    print("Original PDF count: " + str(origin_count))
+    print("Unpacked PDF count: " + str(unpack_count))
+    if os.path.isdir(duplicate_dir):
+        dup_count = pdfcount(duplicate_dir)
+        print("Duplicate PDF count: " + str(dup_count))
+    if origin_count == (unpack_count + dup_count):
+        print("Success! File count correct!")
+    else:
+        print("Fail! File count incorrect!")

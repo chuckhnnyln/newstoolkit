@@ -7,7 +7,7 @@ if len(sys.argv)==1:
     quit()
 
 root_dir = sys.argv[1]
-junk = ('._', '.DS_Store', 'Thumbs.db')
+junk = ('._', '.DS_', 'Thumbs.db')
 junk_count = 0
 
 for root, dirs, files in os.walk(root_dir):

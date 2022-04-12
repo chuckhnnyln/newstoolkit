@@ -1,42 +1,81 @@
-#/bin/bash
-# P1 = Source folder
+#!/usr/bin/env python3
 
-#Run from folder containing target.
+# Breaks folders into NYSHN ingestible chunks
+# Argument 1 = target folder
+# Argument 2 = file threshold
 
-ORIGIN=$1
-TARGET=$1"-output"
-PAGETHRESHOLD=2000
-CHUNKCOUNT=1
-PDFCOUNT=0
+import os
+import sys
+import shutil
 
-if [[ "$2" != "" ]]; then PAGETHRESHOLD=$2; fi
+def clean(Folder):
+    junk = ('._', '.DS_', 'Thumbs.db')
 
-echo "Using threshold of "$PAGETHRESHOLD
+    for root, dirs, files in os.walk(Folder):
+        for name in files:
+            for search in junk:
+                if search in name:
+                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
 
-#Create work environment
+def count(Folder):
+    FileCount = 0
+    for root, dirs, files in os.walk(os.path.join(TargetDir,Folder)):
+        for name in files:
+            FileCount = FileCount + 1
+    return FileCount
 
-if [[ ! -d "$TARGET" ]]
-	then
-		echo Target directory DOES NOT exist... creating.
-		mkdir $TARGET
-	else
-		echo Target directory exists.
-	fi
+def copyit(ChunkCount,Folder):
+    Chunk = "chunk-" + str(ChunkCount)
+    shutil.copytree(os.path.join(TargetDir,Folder),os.path.join(OutputDir,Chunk,Folder))
 
-#Splits the output folder into smaller ingestable chunks
+def countbyfolder(root_dir):
+    root_count = 0
 
-echo Building the file list...
+    for folder in os.listdir(root_dir):
+        file_count = 0
+        for root, dirs, files in os.walk(os.path.join(root_dir,folder)):
+            for name in files:
+                file_count = file_count+1
+        print(str(file_count) + " : " + str(folder))
+        root_count = root_count + file_count
+    print(str(root_count) + " total files.")
 
-IFS=$'\n'
-FILELIST=(`ls "$ORIGIN" | sort`)
+if __name__ == "__main__":
+    #startup
+    if len(sys.argv)==1:
+        print("No directory specified!")
+        print("chunking [directory]")
+        quit()
 
-for FILE in "${FILELIST[@]}"
-do
-	FILECOUNT=$((FILECOUNT+1))
-	echo $FILE : $FILECOUNT : $CHUNKCOUNT
-	if [[ ! -d "$TARGET"/chunk-"$CHUNKCOUNT" ]]; then mkdir "$TARGET"/chunk-"$CHUNKCOUNT"; fi
-	cp -rv $ORIGIN/$FILE $TARGET/"chunk-"$CHUNKCOUNT"/"
-	if [[ $FILECOUNT -gt $PAGETHRESHOLD ]]; then FILECOUNT=0; CHUNKCOUNT=$(($CHUNKCOUNT+1)); fi
-done
+    TargetDir = sys.argv[1]
+    OutputDir = TargetDir + "_output"
+    ChunkCount = 1
+    CurrentChunkCount = 0
 
-exit 0
+    if len(sys.argv)==3:
+        Threshold = sys.argv[2]
+    else:
+        Threshold = 25000
+
+    if not os.path.isdir(TargetDir):
+        print("Target folder not found!")
+        quit()
+    if not os.path.isdir(OutputDir):
+        os.mkdir(OutputDir)
+
+    #main program loop
+    print("Cleaning junk files from target folder...")
+    clean(TargetDir)
+
+    for Folder in os.listdir(TargetDir):
+        FileCount = count(Folder)
+
+        CurrentChunkCount = CurrentChunkCount + FileCount
+        if int(CurrentChunkCount) > int(Threshold):
+            ChunkCount = ChunkCount + 1
+            CurrentChunkCount = FileCount
+            copyit(ChunkCount,Folder)
+        else:
+            copyit(ChunkCount,Folder)
+        print(Folder + " " + str(FileCount) + " files :: chunk " +str(ChunkCount) + " " + str(CurrentChunkCount)) + " files"
+    countbyfolder(OutputDir)

@@ -1,0 +1,37 @@
+#/bin/bash
+# Takes 2up tifs and splits into 1up tifs FASTER!
+# Chuck Henry 2018
+# Requires Imagemagick installed
+
+SOURCE=$1
+LOAD=$2
+RATIO=1.00000000000000
+
+if [[ $LOAD == "" ]]; then LOAD=1; fi
+
+workit() {
+  FILE=$1
+  FILESANSEXT=${FILE%.*}
+  GEOMETRY=$(identify -format "%w,%h" "$FILE")
+  WIDTH="${GEOMETRY%%,*}"
+  HEIGHT="${GEOMETRY#*,}"
+  FACTOR=(`awk "BEGIN {print $WIDTH / $HEIGHT}"`)
+  if (( $(echo "$FACTOR $RATIO" | awk '{print ($1 > $2)}') ))
+  then
+    echo $FILE" "$WIDTH"x"$HEIGHT" F:"$FACTOR" Splitting"
+    convert $FILE -gravity West -crop '53%x100%' $FILESANSEXT'_01.'tif &
+    convert $FILE -gravity East -crop '53%x100%' $FILESANSEXT'_02.'tif &
+    wait
+    rm $FILE
+  else
+    echo $FILE" "$WIDTH"x"$HEIGHT" F:"$FACTOR" Skipping"
+  fi
+}
+export -f workit
+
+#Main program
+echo "Finding tifs..."
+IFS=$'\n'
+find "${SOURCE%/}" -iname "*.tif" | parallel --jobs $LOAD workit
+
+exit 0

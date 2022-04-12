@@ -1,27 +1,52 @@
-#/bin/bash
-# Generates TIF from PDF in existing folders.
-# Chuck Henry 2017
-#Requires Imagemagick and GhostScript installed
+#!/usr/bin/env python3
+from pdf2image import convert_from_path
+from PIL import Image
+import sys
+import os
+import multiprocessing as mp
 
-TARGETDIR=$1
+BASEWIDTH = 2500
 
-workit() {
-	FILE=$1
-	FILESANSEXT=${FILE%.*}
-	echo -n "Working on: "$FILE
-	if [[ ! -e $FILESANSEXT.tif ]]
-	then
-		convert $FILE -density 300 -resize 2500x -type palette $FILESANSEXT.tif
-		echo " Done!"
-	else
-		echo " TIF already created."
-	fi
-}
-export -f workit
+def image_process(target):
+    print(f"{mp.current_process()} working {target}")
+    image =  convert_from_path(target)
+    filename, extension = os.path.splitext(target)
+    if len(image) > 1:
+        print(f"{target} is multipage! Only working on the first!")
+    width_percent = (BASEWIDTH/float(image[0].size[0]))
+    hori_size = int((float(image[0].size[1]) * float(width_percent)))
+    mod_image = image[0].resize((BASEWIDTH, hori_size), Image.ANTIALIAS)
+    mod_image.save(filename + '.tif', 'TIFF', dpi=(300,300))
 
-#Main program
-echo "Creating Inventory..."
-IFS=$'\n'
-find "${TARGETDIR%/}" -iname "*.pdf" | parallel --jobs 3 workit
+def clean(Folder):
+    junk = ('._', '.DS_', 'Thumbs.db')
 
-exit 0
+    for root, dirs, files in os.walk(Folder):
+        for name in files:
+            for search in junk:
+                if search in name:
+                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
+
+if __name__ == "__main__":
+    #startup
+    if len(sys.argv)==1:
+        print("No directory specified!")
+        print("pdf2tif [directory]")
+        quit()
+
+    TargetDir = sys.argv[1]
+
+    if not os.path.isdir(TargetDir):
+        print("Target folder not found!")
+        quit()
+
+    clean(TargetDir)
+
+    targets = []
+    pool = mp.Pool(mp.cpu_count() - 1)
+
+    for root, dirs, files in os.walk(TargetDir):
+        for names in files:
+            targets.append(os.path.join(root,names))
+
+    task = pool.map(image_process, targets)

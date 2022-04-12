@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+import multiprocessing as mp
+
+def clean(root_dir):
+    junk = ('._', '.DS_Store', 'Thumbs.db')
+    junk_count = 0
+
+    for root, dirs, files in os.walk(root_dir):
+        for name in files:
+            for search in junk:
+                if search in name:
+                    junk_count = junk_count+1
+                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
+
+    print('Removed ' + str(junk_count) + ' junk files.')
+
+def copy_file(target_file):
+    root = target_file[0]
+    file = target_file[1]
+    source_dir = target_file[2]
+    dest_dir = target_file[3]
+    india_shipment = target_file[4]
+
+    destination = root.replace('/frames', '')
+    destination = destination.replace(source_dir + '/', '')
+
+    destination_path = os.path.join(dest_dir, india_shipment, destination)
+
+    if not os.path.isdir(destination_path):
+        try:
+            os.makedirs(destination_path)
+        except:
+            print("Directory already exists!")
+
+    print(f"Copying {os.path.join(destination_path,file)}")
+    shutil.copy2(os.path.join(root,file), os.path.join(destination_path,file))
+
+if __name__ == "__main__":
+    original_dir = sys.argv[1]
+    india_shipment = sys.argv[2]
+    source_dir = '/Users/chuck/Desktop'
+    dest_dir = '/Users/chuck/Desktop/target'
+
+    clean(original_dir)
+
+    if not os.path.isdir(os.path.join(source_dir,original_dir)):
+        print("Target folder not found!")
+        quit()
+
+    file_list = []
+    for root, dirs, files in os.walk(os.path.join(source_dir,original_dir)):
+        for file in files:
+            if file.endswith('tif'):
+                file_list.append((root, file, source_dir, dest_dir, india_shipment))
+
+    pool = mp.Pool(mp.cpu_count() - 1)
+    task = pool.map(copy_file, file_list)
