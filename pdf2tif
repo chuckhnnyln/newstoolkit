@@ -1,52 +1,43 @@
 #!/usr/bin/env python3
-from pdf2image import convert_from_path
-from PIL import Image
-import sys
+# Chuck Henry 2022
+# Requires Poppler and pdf2image installed, written on MacOS
+# Creates a tif of each PDF file
+
 import os
-import multiprocessing as mp
+import sys
+from subprocess import call
+from multiprocessing.dummy import Pool as ThreadPool
+from pdf2image import convert_from_path
 
-BASEWIDTH = 2500
+def OcrFile(ItemPath):
+    ItemName = os.path.basename(ItemPath)
+    ItemNameNoExt = os.path.splitext(ItemName)[0]
+    ItemPathNoFile = os.path.dirname(ItemPath)
+    #print(f'Converting {ItemName} to tif.') #Python3
+    print('Converting ' + ItemName + ' to tif.') #Python2
+    images = convert_from_path(ItemPath)
+    images[0].save(os.path.join(ItemPathNoFile,ItemNameNoExt + '.tif'),'tiff', dpi=(300, 300))
 
-def image_process(target):
-    print(f"{mp.current_process()} working {target}")
-    image =  convert_from_path(target)
-    filename, extension = os.path.splitext(target)
-    if len(image) > 1:
-        print(f"{target} is multipage! Only working on the first!")
-    width_percent = (BASEWIDTH/float(image[0].size[0]))
-    hori_size = int((float(image[0].size[1]) * float(width_percent)))
-    mod_image = image[0].resize((BASEWIDTH, hori_size), Image.ANTIALIAS)
-    mod_image.save(filename + '.tif', 'TIFF', dpi=(300,300))
+if __name__ == '__main__':
 
-def clean(Folder):
-    junk = ('._', '.DS_', 'Thumbs.db')
-
-    for root, dirs, files in os.walk(Folder):
-        for name in files:
-            for search in junk:
-                if search in name:
-                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
-
-if __name__ == "__main__":
-    #startup
-    if len(sys.argv)==1:
-        print("No directory specified!")
+    if len(sys.argv) == 1:
+        print("No directory or extension specified!")
         print("pdf2tif [directory]")
+        print("IE: pdf2tif MyFolder")
         quit()
 
-    TargetDir = sys.argv[1]
+    RootDir = sys.argv[1]
+    Extension = 'pdf'
 
-    if not os.path.isdir(TargetDir):
-        print("Target folder not found!")
-        quit()
+    # Find target files
+    FileList=[]
+    for root, dirs, files in os.walk(RootDir):
+        for Item in files:
+            if Item.endswith(Extension):
+                FileList.append(os.path.join(root,Item))
 
-    clean(TargetDir)
-
-    targets = []
-    pool = mp.Pool(mp.cpu_count() - 1)
-
-    for root, dirs, files in os.walk(TargetDir):
-        for names in files:
-            targets.append(os.path.join(root,names))
-
-    task = pool.map(image_process, targets)
+    # Pass the file list to workers to complete
+    pool = ThreadPool(6)
+    pool.map(OcrFile, FileList)
+    pool.close()
+    pool.join()
