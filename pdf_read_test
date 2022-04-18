@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+import os
+import sys
+import pdfplumber
+import multiprocessing as mp
+
+Target = sys.argv[1]
+LogFile = Target + "_pdf-read-fails.txt"
+FileList = []
+FileCount = 0
+
+def LogToFile(LogFile, Message):
+    f = open(LogFile, "a")
+    f.write(Message + "\n")
+    f.close()
+
+def CheckFile(FilePath):
+    global LogFile
+    try:
+        with pdfplumber.open(FilePath) as pdf:
+            page = pdf.pages[0]
+    except:
+        print(f'FAIL: {FilePath}')
+        LogToFile(LogFile, FilePath)
+
+def CountFails(LogFile):
+    with open(LogFile, "r") as fp:
+        for count, line in enumerate(fp):
+            pass
+    return count + 1
+
+if __name__ == "__main__":
+
+    if os.path.isfile(LogFile):
+        os.remove(LogFile)
+        print("Deleting previous run logfile.")
+
+    print("Beginning PDF test.")
+    for root, dirs, files in os.walk(Target):
+        for item in sorted(files):
+            if item.endswith('pdf'):
+                FilePath = os.path.join(root,item)
+                FileList.append(FilePath)
+
+    pool = mp.Pool(mp.cpu_count() - 1)
+    task = pool.map(CheckFile, FileList)
+
+    FailCount = CountFails(LogFile)
+    FailPercent = FailCount * 100 / len(FileList)
+    print("Fails: " + str(FailCount) + " (" + str(round(FailPercent, 1)) + "%)")
