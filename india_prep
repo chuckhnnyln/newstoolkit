@@ -29,14 +29,16 @@ def copy_file(target_file):
 
     destination_path = os.path.join(dest_dir, india_shipment, destination)
 
-    if not os.path.isdir(destination_path):
-        try:
-            os.makedirs(destination_path)
-        except:
-            print("Directory already exists!")
-
-    print(f"Copying {os.path.join(destination_path,file)}")
-    shutil.copy2(os.path.join(root,file), os.path.join(destination_path,file))
+    if not os.path.isfile(os.path.join(destination_path,file)):
+        if not os.path.isdir(destination_path):
+            try:
+                os.makedirs(destination_path)
+            except:
+                print("Directory already exists!")
+        print(f"Copying {os.path.join(destination_path,file)}")
+        shutil.copy2(os.path.join(root,file), os.path.join(destination_path,file))
+    else:
+        print(f"{os.path.join(destination_path,file)} already copied. Skipping!")
 
 if __name__ == "__main__":
     original_dir = sys.argv[1]
