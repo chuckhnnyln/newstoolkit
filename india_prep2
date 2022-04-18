@@ -47,10 +47,10 @@ if __name__ == "__main__":
         print("Target folder not found!")
         quit()
 
-    print("Collecting tifs needing copying...")
-
-    file_list = []
+    print("Identifying frames folders...")
     subfolders = fast_scandir(os.path.join(source_dir,original_dir))
+    print("Collecting tifs needing copying...")
+    file_list = []
     for folder in subfolders:
         if folder.endswith('frames'):
             for root, dirs, files in os.walk(folder):
@@ -58,6 +58,6 @@ if __name__ == "__main__":
                     if file.endswith('tif'):
                         file_list.append((root, file, source_dir, dest_dir, india_shipment))
 
-    print("Copying of files...")
+    print("Copying files...")
     pool = mp.Pool(mp.cpu_count() - 1)
     task = pool.map(copy_file, file_list)
