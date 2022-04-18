@@ -46,17 +46,20 @@ if __name__ == "__main__":
     source_dir = '/Users/chuck/Desktop'
     dest_dir = '/Users/chuck/Desktop/target'
 
-    clean(original_dir)
+    #print("Cleaning unnessary files...")
+    #clean(original_dir)
 
     if not os.path.isdir(os.path.join(source_dir,original_dir)):
         print("Target folder not found!")
         quit()
 
+    print("Collecting tifs needing copying.")
     file_list = []
     for root, dirs, files in os.walk(os.path.join(source_dir,original_dir)):
         for file in files:
             if file.endswith('tif'):
                 file_list.append((root, file, source_dir, dest_dir, india_shipment))
 
+    print("Beginning copying of files.")
     pool = mp.Pool(mp.cpu_count() - 1)
     task = pool.map(copy_file, file_list)
