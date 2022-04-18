@@ -11,12 +11,11 @@ def copy_file(target_file):
     dest_dir = target_file[3] #/Users/chuck/Desktop/ToProduction
     india_shipment = target_file[4] #test_india
 
-    destination = root.replace('/frames', '') #/Users/chuck/Desktop/test_shipment/box_03
-    destination = destination.replace(source_dir, '') #test_shipment/box_03
-    destination_path = os.path.join(dest_dir, india_shipment, destination) #/Users/chuck/Desktop/ToProduction/test_india/test_shipment/box_03
+    destination = root.replace('/frames', '')
+    destination = destination.replace(source_dir + '/', '')
 
-    OriginalPath = os.path.join(root,file) #/Users/chuck/Desktop/test_shipment/box_03/frames/file_04.tif
-    CopyPath = os.path.join(destination_path,file)
+    OriginalPath = os.path.join(root,file)
+    CopyPath = os.path.join(dest_dir,india_shipment,destination,file)
 
     if not os.path.isfile(CopyPath):
         if not os.path.isdir(destination_path):
