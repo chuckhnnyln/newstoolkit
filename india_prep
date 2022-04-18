@@ -43,8 +43,8 @@ def copy_file(target_file):
 if __name__ == "__main__":
     original_dir = sys.argv[1]
     india_shipment = sys.argv[2]
-    source_dir = '/Users/chuck/Desktop'
-    dest_dir = '/Users/chuck/Desktop/target'
+    source_dir = '/run/user/1000/gvfs/smb-share:server=192.168.5.110,share=datadrive/_staging'
+    dest_dir = '/home/rose/Staging/ToProduction'
 
     #print("Cleaning unnessary files...")
     #clean(original_dir)
@@ -53,13 +53,13 @@ if __name__ == "__main__":
         print("Target folder not found!")
         quit()
 
-    print("Collecting tifs needing copying.")
+    print("Collecting tifs needing copying...")
     file_list = []
     for root, dirs, files in os.walk(os.path.join(source_dir,original_dir)):
         for file in files:
             if file.endswith('tif'):
                 file_list.append((root, file, source_dir, dest_dir, india_shipment))
 
-    print("Beginning copying of files.")
+    print("Copying of files...")
     pool = mp.Pool(mp.cpu_count() - 1)
     task = pool.map(copy_file, file_list)
