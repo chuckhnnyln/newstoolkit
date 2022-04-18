@@ -16,7 +16,7 @@ def copy_file(target_file):
     destination_path = os.path.join(dest_dir, india_shipment, destination) #/Users/chuck/Desktop/ToProduction/test_india/test_shipment/box_03
 
     OriginalPath = os.path.join(root,file) #/Users/chuck/Desktop/test_shipment/box_03/frames/file_04.tif
-    CopyPath = os.path.join(destination_path,file) 
+    CopyPath = os.path.join(destination_path,file)
 
     if not os.path.isfile(CopyPath):
         if not os.path.isdir(destination_path):
@@ -38,10 +38,10 @@ def fast_scandir(dirname):
 if __name__ == "__main__":
     original_dir = sys.argv[1]
     india_shipment = sys.argv[2]
-    #source_dir = '/run/user/1000/gvfs/smb-share:server=192.168.5.110,share=datadrive/_staging'
-    source_dir = '/Users/chuck/Desktop/'
-    #dest_dir = '/home/rose/Staging/ToProduction'
-    dest_dir = '/Users/chuck/Desktop/ToProduction'
+    source_dir = '/run/user/1000/gvfs/smb-share:server=192.168.5.110,share=datadrive/_staging'
+    #source_dir = '/Users/chuck/Desktop/'
+    dest_dir = '/home/rose/Staging/ToProduction'
+    #dest_dir = '/Users/chuck/Desktop/ToProduction'
 
     if not os.path.isdir(os.path.join(source_dir,original_dir)):
         print("Target folder not found!")
