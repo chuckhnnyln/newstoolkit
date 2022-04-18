@@ -59,6 +59,7 @@ if __name__ == "__main__":
         for file in files:
             if file.endswith('tif'):
                 file_list.append((root, file, source_dir, dest_dir, india_shipment))
+                print(".", end='')
 
     print("Copying of files...")
     pool = mp.Pool(mp.cpu_count() - 1)
