@@ -4,63 +4,59 @@ import sys
 import shutil
 import multiprocessing as mp
 
-def clean(root_dir):
-    junk = ('._', '.DS_Store', 'Thumbs.db')
-    junk_count = 0
-
-    for root, dirs, files in os.walk(root_dir):
-        for name in files:
-            for search in junk:
-                if search in name:
-                    junk_count = junk_count+1
-                    if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
-
-    print('Removed ' + str(junk_count) + ' junk files.')
-
 def copy_file(target_file):
-    root = target_file[0]
-    file = target_file[1]
-    source_dir = target_file[2]
-    dest_dir = target_file[3]
-    india_shipment = target_file[4]
+    root = target_file[0] #/Users/chuck/Desktop/test_shipment/box_03/frames
+    file = target_file[1] #file_04.tif
+    source_dir = target_file[2] #/Users/chuck/Desktop/
+    dest_dir = target_file[3] #/Users/chuck/Desktop/ToProduction
+    india_shipment = target_file[4] #test_india
 
     destination = root.replace('/frames', '')
     destination = destination.replace(source_dir + '/', '')
 
-    destination_path = os.path.join(dest_dir, india_shipment, destination)
+    OriginalPath = os.path.join(root,file)
+    CopyPath = os.path.join(dest_dir,india_shipment,destination,file)
 
-    if not os.path.isfile(os.path.join(destination_path,file)):
-        if not os.path.isdir(destination_path):
-            try:
-                os.makedirs(destination_path)
-            except:
-                print("Directory already exists!")
-        print(f"Copying {os.path.join(destination_path,file)}")
-        shutil.copy2(os.path.join(root,file), os.path.join(destination_path,file))
+    if not os.path.isfile(CopyPath):
+        print(f"Copying {OriginalPath} to {CopyPath}")
+        os.makedirs(os.path.join(dest_dir,india_shipment,destination), exist_ok=True)
+        shutil.copy2(OriginalPath, CopyPath)
     else:
-        print(f"{os.path.join(destination_path,file)} already copied. Skipping!")
+        print(f"{CopyPath} already copied. Skipping!")
+
+def fast_scandir(dirname):
+    subfolders = [f.path for f in os.scandir(dirname) if f.is_dir()]
+    for dirname in list(subfolders):
+        subfolders.extend(fast_scandir(dirname))
+    return subfolders
 
 if __name__ == "__main__":
     original_dir = sys.argv[1]
     india_shipment = sys.argv[2]
     source_dir = '/run/user/1000/gvfs/smb-share:server=192.168.5.110,share=datadrive/_staging'
+    #source_dir = '/Users/chuck/Desktop/'
     dest_dir = '/home/rose/Staging/ToProduction'
-
-    #print("Cleaning unnessary files...")
-    #clean(original_dir)
+    #dest_dir = '/Users/chuck/Desktop/ToProduction'
+    FileCount = 0
 
     if not os.path.isdir(os.path.join(source_dir,original_dir)):
         print("Target folder not found!")
         quit()
 
+    print("Identifying frames folders...")
+    subfolders = fast_scandir(os.path.join(source_dir,original_dir))
     print("Collecting tifs needing copying...")
     file_list = []
-    for root, dirs, files in os.walk(os.path.join(source_dir,original_dir)):
-        for file in files:
-            if file.endswith('tif'):
-                file_list.append((root, file, source_dir, dest_dir, india_shipment))
-                print(".", end='')
+    for folder in subfolders:
+        if folder.endswith('frames'):
+            for root, dirs, files in os.walk(folder):
+                for file in files:
+                    if file.endswith('tif'):
+                        file_list.append((root, file, source_dir, dest_dir, india_shipment))
+                        FileCount =+ 1
 
-    print("Copying of files...")
+    print("Copying files...")
     pool = mp.Pool(mp.cpu_count() - 1)
     task = pool.map(copy_file, file_list)
+
+    print(f"Copied {FileCount} files!)
