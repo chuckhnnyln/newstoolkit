@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import os
+import sys
+import pandas as pd
+#xlsxwriter needs to be installed too!
+
+if __name__ == "__main__":
+
+    if len(sys.argv) == 1:
+        print("Please include Google csv filename")
+        exit()
+
+    SourceFile = sys.argv[1]
+
+    if not os.path.isfile(SourceFile):
+        print("Filename not found!")
+        exit()
+
+    OutputFile = SourceFile.split(".")[0]
+    OutputFile = OutputFile + ".xlsx"
+    if os.path.isfile(OutputFile):
+        os.remove(OutputFile)
+
+    SourceDataFrame = pd.read_csv(SourceFile)
+    CouncilNames = SourceDataFrame.COUNCIL.unique()
+    CouncilFrameDict = {elem : pd.DataFrame() for elem in CouncilNames}
+
+    for key in CouncilFrameDict.keys():
+        CouncilFrameDict[key] = SourceDataFrame[:][SourceDataFrame.COUNCIL == key]
+
+    writer = pd.ExcelWriter(OutputFile, engine='xlsxwriter')
+    for Council in CouncilNames:
+        NaN = Council != Council
+        if NaN == False:
+            CouncilFrameDict[Council].to_excel(writer, sheet_name = Council, index=False)
+    writer.save()
