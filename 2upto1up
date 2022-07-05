@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     if extension not in allowed_ext:
         print("Not a splitable file type!")
-        print("Allowed extentions: png, tif, jpg")
+        print("Allowed extentions: png, tif, jpg, bmp")
         quit()
 
     for root, dirs, files in os.walk(target_dir):

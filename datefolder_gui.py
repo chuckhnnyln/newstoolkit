@@ -7,7 +7,7 @@ import threading
 
 
 #GUI Global Settings
-sg.theme('BlueMono')
+sg.theme('DarkPurple')
 TitleFont = ('Arial', 14, 'bold')
 Font = ('Arial', 12, 'normal')
 Pad = (10,10)

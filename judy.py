@@ -115,7 +115,7 @@ def MainLoop(FileList, SourceFolder):
         FailTally = TallyFails(Results, FailTally) #Tally up those failures
     FailList.sort()
     LogIt(LogName, FailList) #write the log file
-    PrettyOutput(FailTally) #let the user know what the results were
+    PrettyOutput(FailTally,FileList) #let the user know what the results were
 
 def LogIt(LogName, List):
     #Yup, logs it to the log file.
