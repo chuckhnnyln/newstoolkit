@@ -26,7 +26,9 @@ def DisplayIt(List):
 def EvalFile(File):
     #This evaluates each file and returns the findings.
     Results = {}
-    try:
+    
+    #File 'open' test
+    try: 
         Pdf = fitz.open(File)
     except:
         Results['read'] = 'fail'
