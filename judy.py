@@ -62,10 +62,11 @@ def EvalFile(File):
     FirstImage = ImageList[0]
     Width = FirstImage[2]
     Height = FirstImage[3]
-    if Width > 5000:
-        Results['dimension'] = 'fail'
-    else:
-        Results['dimension'] = 'pass'    
+    #if Width > 5000:
+    #    Results['dimension'] = 'fail'
+    #else:
+    #    Results['dimension'] = 'pass'
+    Results['dimension'] = 'untested'
 
     #Rotation Test
     if Width > Height:
