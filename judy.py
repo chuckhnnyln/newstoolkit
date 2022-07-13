@@ -92,7 +92,7 @@ def EvalFile(File):
     #Date Name check
     FileName = os.path.basename(File)
     DateListed1 = re.findall('(?<!\d)\d{8}(?!\d)',FileName)
-    DateListed2 = re.findall('\d{4}-0[1-9]-0[1-9]',FileName)
+    DateListed2 = re.findall('\d{4}-[0-1][1-9]-[0-1][1-9]',FileName)
     if len(DateListed1) == 0 and len(DateListed2) == 0:
         Results['datename'] = 'fail'
     else:
