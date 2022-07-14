@@ -25,6 +25,7 @@ def MakeCell(LogFile,FailCode):
     return CellName    
 
 def CopyToCell(TargetFiles, CellName):
+    print("Filling the cells with prisoners...")
     for file in TargetFiles:
         OriginPath = file[file.find('/') + 1:]
         os.makedirs(os.path.dirname(os.path.join(CellName,OriginPath)), exist_ok=True)
