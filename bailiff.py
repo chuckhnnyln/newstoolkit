@@ -15,6 +15,8 @@ def ReadLog(LogFile,FailCode):
     return TargetFiles
 
 def MakeCell(LogFile,FailCode):
+    if FailCode == "rotate/2up":
+        FailCode = "rotate-2up"
     SansPrefix = LogFile[LogFile.find('_') + 1:]
     SansSuffix = SansPrefix[:SansPrefix.find('_')]
     CellName = "cell-" + FailCode + "_" + SansSuffix
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     if not os.path.exists(LogFile):
         print("Log file not found!")
         sys.exit()
-    
+
     CellName = MakeCell(LogFile,FailCode)
     TargetFiles = ReadLog(LogFile,FailCode)
     CopyToCell(TargetFiles,CellName)
