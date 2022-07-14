@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from distutils.log import Log
 import sys
 import os
 import shutil
