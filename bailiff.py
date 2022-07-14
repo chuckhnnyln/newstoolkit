@@ -26,7 +26,7 @@ def MakeCell(LogFile,FailCode):
 def CopyToCell(TargetFiles, CellName):
     for file in TargetFiles:
         OriginPath = file[file.find('/') + 1:]
-        os.makedirs(os.path.dirname(os.path.join(CellName,OriginPath)))
+        os.makedirs(os.path.dirname(os.path.join(CellName,OriginPath)), exist_ok=True)
         shutil.copy2(file, os.path.join(CellName,OriginPath))
 
 if __name__ == "__main__":
