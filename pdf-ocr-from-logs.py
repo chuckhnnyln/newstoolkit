@@ -16,7 +16,9 @@ def ReadLog(LogFile,FailCode):
     return TargetFiles
 
 def OcrThePdf(Target):
-    Command = f'ocrmypdf --clean --force-ocr --output-type pdf --optimize 0 --fast-web-view 0 {Target} {Target}'
+    RootPath = '/home/rose/Staging/FromProduction/nnyln-second-quarter-2022'
+    FinalPath = os.path.join(RootPath, Target)
+    Command = f'ocrmypdf --clean --force-ocr --output-type pdf --optimize 0 --fast-web-view 0 {FinalPath} {FinalPath}'
     os.system(Command)
 
 if __name__ == "__main__":
