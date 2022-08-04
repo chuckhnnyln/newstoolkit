@@ -51,12 +51,15 @@ def EvalFile(File):
         Results['multipage'] = 'pass'
 
     #Multiimage / layered Test
-    Page = Pdf[0]
-    ImageList = Page.get_images()
+    try:
+        Page = Pdf[0]
+        ImageList = Page.get_images()
+    except:
+        ImageList=["fakepage","fakepage"]
     if len(ImageList) > 1:
         Results['layered'] = 'fail'
     else:
-        Results['layered'] = 'pass'     
+        Results['layered'] = 'pass'      
 
     #Dimensions Test
     FirstImage = ImageList[0]
@@ -75,7 +78,10 @@ def EvalFile(File):
         Results['rotate/2up'] = 'pass'            
 
     #OCR Test
-    Text = Page.get_text('words')
+    try:
+        Text = Page.get_text('words')
+    except BaseException:
+        Text =''
     if len(Text) < 1:
         Results['ocr'] = 'fail'
     else:
