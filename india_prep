@@ -33,11 +33,14 @@ def fast_scandir(dirname):
 if __name__ == "__main__":
     original_dir = sys.argv[1]
     india_shipment = sys.argv[2]
+    file_extension = sys.argv[3]
     source_dir = '/run/user/1000/gvfs/smb-share:server=192.168.5.110,share=datadrive/_staging/_needs-india'
     #source_dir = '/Users/chuck/Desktop/'
     dest_dir = '/home/rose/Staging/ToProduction'
     #dest_dir = '/Users/chuck/Desktop/ToProduction'
     FileCount = 0
+    if file_extension == '':
+        file_extension = 'tif'
 
     if not os.path.isdir(os.path.join(source_dir,original_dir)):
         print("Target folder not found!")
@@ -51,7 +54,7 @@ if __name__ == "__main__":
         if folder.endswith('frames'):
             for root, dirs, files in os.walk(folder):
                 for file in files:
-                    if file.endswith('tif'):
+                    if file.endswith(file_extension):
                         file_list.append((root, file, source_dir, dest_dir, india_shipment))
                         FileCount =+ 1
 
