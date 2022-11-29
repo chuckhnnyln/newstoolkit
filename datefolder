@@ -2,39 +2,58 @@
 import os
 import sys
 
-if len(sys.argv)<4:
-    print("Usage: datefolder [folder] [extension] [# first character of date] [options]")
-    print("options: (t) test, (-) strip -, (e)ditions 8+3")
-    quit()
+if __name__ == "__main__":
 
-options = 0
-date_length = 8
-test_count = 0
-test_length = 3
-root_dir = sys.argv[1]
-extension = sys.argv[2]
-first_char = int(sys.argv[3])-1
-if len(sys.argv) == 5: options = sys.argv[4]
-if options == "-": date_length = 10
+    if len(sys.argv)<4:
+        print("Usage: datefolder [folder] [extension] [# first character of date] [options]")
+        print("options: (t) test, (-) strip -, (e)ditions 8+3")
+        quit()
 
-last_char = int(first_char) + 8
-for root, dirs, files in os.walk(root_dir):
-    for item in files:
-        if test_count > test_length: break
-        if item == ".DS_Store":
-            os.remove(os.path.join(root,item))
-            break
-        if '._' in item:
-            os.remove(os.path.join(root,item))
-            break
-        file_date = item[first_char:last_char]
-        file_date = file_date.replace('-','')
-        if options == "t":
-            print(f"{file_date} : {item}")
-            test_count = test_count + 1
-        else:
-            if os.path.exists(os.path.join(root_dir,file_date)):
-                os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))
+    options = 0
+    date_length = 8
+    test_count = 0
+    test_length = 5
+    removed_files = 0
+    foldered_files = 0
+    folders = 0
+    root_dir = sys.argv[1]
+    extension = sys.argv[2]
+    first_char = int(sys.argv[3])-1
+    if len(sys.argv) == 5: options = sys.argv[4]
+    if options == "-": date_length = 10
+
+    last_char = int(first_char) + 8
+    for root, dirs, files in os.walk(root_dir):
+        files.sort()
+        for item in files:
+            if test_count > test_length: break
+            if item == ".DS_Store":
+                os.remove(os.path.join(root,item))
+                removed_files = removed_files + 1
+            if '._' in item:
+                os.remove(os.path.join(root,item))
+                removed_files = removed_files + 1
+            file_date = item[first_char:last_char]
+            file_date = file_date.replace('-','')
+            if options == "t":
+                print(f"{file_date} : {item}")
+                test_count = test_count + 1
             else:
-                os.mkdir(os.path.join(root_dir,file_date))
-                os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))
+                if os.path.exists(os.path.join(root_dir,file_date)):
+                    os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))
+                    #print(os.path.join(root_dir,item))
+                    #print(os.path.join(root_dir,file_date,item))
+                    foldered_files = foldered_files + 1
+                    
+                else:
+                    os.mkdir(os.path.join(root_dir,file_date))
+                    os.rename(os.path.join(root_dir,item), os.path.join(root_dir,file_date,item))
+                    #print(os.path.join(root_dir,item))
+                    #print(os.path.join(root_dir,file_date,item))
+                    foldered_files = foldered_files + 1
+                    folders = folders + 1
+    
+    print(f'\nFound {len(files)} files to process.')
+    print(f'Removed {removed_files} junk files.')
+    print(f'Created {folders} date folders.')
+    print(f'Foldered {foldered_files} files.')
