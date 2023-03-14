@@ -17,8 +17,8 @@ def OcrThePdf(Target):
     FilePath, Ext = os.path.splitext(Target)
     FinalPath = FilePath + '.pdf'
     Command = "ocrmypdf --clean --force-ocr --output-type pdf --optimize 0 --fast-web-view 0 '" + Target + "' '" +  FinalPath + "'"
-    print(Command)
-    #os.system(Command)
+    #print(Command)
+    os.system(Command)
 
 if __name__ == "__main__":
 
