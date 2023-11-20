@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os
 import sys
-from PyPDF2 import PdfReader, PdfWriter
+from PIL import Image
+#from PyPDF2 import PdfReader, PdfWriter
 
 def FindFiles(SourceDirectory,Ext):
     FileList = []
@@ -19,30 +20,29 @@ def Clean(root_dir):
                 if search in name:
                     if os.path.exists(os.path.join(root,name)): os.remove(os.path.join(root,name))
 
-def SplitPdfs(SourceDirectory, FileList, TargetDirectory):
+def SplitTifs(SourceDirectory, FileList, TargetDirectory):
     TotalFiles = len(FileList)
     FileCount = 0
     for file in FileList:
-        print(f'Beginning {file}')
         SourcePath = os.path.join(SourceDirectory,file)
-        pdf = PdfReader(SourcePath, strict=False)
+
+        tif = Image.open(SourcePath)
         FileCount = FileCount + 1
 
-        print(f'({FileCount}/{TotalFiles}) {file}: {len(pdf.pages)} pages')
+        TiffPages = tif.n_frames
 
-        for page in range(len(pdf.pages)):
-            pdf_writer = PdfWriter()
-            pdf_writer.add_page(pdf.pages[page])
+        print(f'({FileCount}/{TotalFiles}) {file}: {TiffPages} pages')
 
-            filename = file.split(".")
-            pagenum = page + 1
+        FixedName = file.split('.')
 
-            OutputFilename = f'{TargetDirectory}/{filename[0]}_{pagenum:0>3}.pdf'
-
-            if not os.path.exists(OutputFilename):
-                print(f'Saving: {OutputFilename}')
-                with open(OutputFilename, 'wb') as out:
-                    pdf_writer.write(out)
+        for i in range(TiffPages):
+            pagenum = i + 1
+            OutputFilename = f'{TargetDirectory}/{FixedName[0]}_{pagenum:0>3}.tif'
+            try:
+                tif.seek(i)
+                tif.save(OutputFilename)
+            except EOFError:
+                continue
 
 if __name__ == "__main__":
     SourceDirectory = sys.argv[1]
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         os.mkdir(TargetDirectory)
     
     Clean(SourceDirectory)
-    FileList = FindFiles(SourceDirectory,'pdf')
-    SplitPdfs(SourceDirectory,FileList,TargetDirectory)
+    FileList = FindFiles(SourceDirectory,'tif')
+    SplitTifs(SourceDirectory,FileList,TargetDirectory)

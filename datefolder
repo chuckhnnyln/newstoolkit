@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     if len(sys.argv)<4:
         print("Usage: datefolder [folder] [extension] [# first character of date] [options]")
-        print("options: (t) test, (-) strip -, (e)ditions 8+3")
+        print("options: (t) test, (-) strip -, (e)ditions 8+3, (a)lternate pattern [20230817]")
         quit()
 
     options = 0
@@ -35,6 +35,10 @@ if __name__ == "__main__":
                 removed_files = removed_files + 1
             file_date = item[first_char:last_char]
             file_date = file_date.replace('-','')
+            if options == "a":
+                year = file_date[4:7]
+                monthday = file_date[0:3]
+                file_date = year + monthday
             if options == "t":
                 print(f"{file_date} : {item}")
                 test_count = test_count + 1

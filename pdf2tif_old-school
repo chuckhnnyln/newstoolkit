@@ -11,7 +11,7 @@ workit() {
 	echo -n "Working on: "$FILE
 	if [[ ! -e $FILESANSEXT.tif ]]
 	then
-		convert $FILE -density 300 -resize 2500x -type palette $FILESANSEXT.tif
+		convert $FILE -density 300 -resize 2000x -type palette $FILESANSEXT.tif
 		echo " Done!"
 	else
 		echo " TIF already created."
@@ -22,6 +22,6 @@ export -f workit
 #Main program
 echo "Creating Inventory..."
 IFS=$'\n'
-find "${TARGETDIR%/}" -iname "*.pdf" | parallel --jobs 3 workit
+find "${TARGETDIR%/}" -iname "*.pdf" | parallel --jobs 1 workit
 
 exit 0

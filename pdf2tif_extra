@@ -1,0 +1,14 @@
+#/bin/bash
+# Generates TIF from PDF in existing folders.
+# Chuck Henry 2017
+# Requires Imagemagick and GhostScript installed
+# Also pdfinfo
+
+TARGET=$1
+
+FILESANSEXT=${TARGET%.*}
+
+convert $TARGET -density 300 -units PixelsPerInch -type palette -scene 1 $FILESANSEXT_%d.tif
+#convert $TARGET -density 150 -units PixelsPerInch -resize 2000x -type palette -scene 1 $FILESANSEXT_%d.tif
+
+exit 0

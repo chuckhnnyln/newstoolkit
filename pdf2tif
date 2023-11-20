@@ -8,6 +8,8 @@ import sys
 from subprocess import call
 from multiprocessing.dummy import Pool as ThreadPool
 from pdf2image import convert_from_path
+from PIL import Image
+Image.MAX_IMAGE_PIXELS = 1000000000
 
 def OcrFile(ItemPath):
     ItemName = os.path.basename(ItemPath)
@@ -16,7 +18,8 @@ def OcrFile(ItemPath):
     #print(f'Converting {ItemName} to tif.') #Python3
     print('Converting ' + ItemName + ' to tif.') #Python2
     images = convert_from_path(ItemPath)
-    images[0].save(os.path.join(ItemPathNoFile,ItemNameNoExt + '.tif'),'tiff', dpi=(300, 300))
+    if not os.path.exists(os.path.join(ItemPathNoFile,ItemNameNoExt + '.tif')):
+        images[0].save(os.path.join(ItemPathNoFile,ItemNameNoExt + '.tif'),'tiff', dpi=(300, 300))
 
 if __name__ == '__main__':
 
