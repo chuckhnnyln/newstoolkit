@@ -10,7 +10,7 @@ if __name__ == "__main__":
         quit()
 
     options = 0
-    date_length = 8
+    date_length = 7
     test_count = 0
     test_length = 5
     removed_files = 0
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 5: options = sys.argv[4]
     if options == "-": date_length = 10
 
-    last_char = int(first_char) + date_length
+    last_char = int(first_char) + 8
     for root, dirs, files in os.walk(root_dir):
         files.sort()
         for item in files:
@@ -35,7 +35,6 @@ if __name__ == "__main__":
                 removed_files = removed_files + 1
             file_date = item[first_char:last_char]
             file_date = file_date.replace('-','')
-            file_date = file_date + '_01'
             if options == "a":
                 year = file_date[4:7]
                 monthday = file_date[0:3]
