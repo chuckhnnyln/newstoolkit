@@ -3,7 +3,6 @@ import os
 import requests
 import xmltodict
 import sys
-#import subprocess
 import shutil
 
 def VeridianIssues(XMLSource):
