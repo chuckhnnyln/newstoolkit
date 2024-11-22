@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Chuck Henry 2022
+# Chuck Henry 2024
 # Requires Poppler and pdf2image installed, written on MacOS
 # Creates a tif of each PDF file
 

@@ -3,7 +3,7 @@
 # Version 1 - 20240415
 
 import os
-import cvs
+import csv
 import sys
 #from multiprocessing.dummy import Pool as ThreadPool
 #import multiprocessing
@@ -29,24 +29,22 @@ def BuildFileList(SourceFolder, ExtensionList):
     return FileList
 
 def ReadCsv(SourcePath):
-    # Untested
     FileContents = []
     with open(SourcePath,'r') as csvfile:
-        csvreader = csvfile.reader(SourcePath, delimiter=',', quotechar='"'))
+        csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
         for row in csvreader:
             FileContents.append(row)
     csvfile.close()
     return FileContents
 
 def WriteCsv(FileContents, SourcePath):
-    # Untested
     # SourcePath assumes a filename last: dogs/cats/list.txt
     DestPath = os.path.dirname(SourcePath)
     if not os.path.exists(DestPath):
-        os.path.makedirs(DestPath)
-    
+        os.makedirs(DestPath)
+
     with open(SourcePath,'w') as csvfile:
-        csvwriter = csvfile.writer(csvfile, delimiter=',', quotechar='"')
+        csvwriter = csv.writer(csvfile, delimiter=',', quotechar='"')
         for row in SourcePath:
             csvwriter.writerow(row)
     csvfile.close()
@@ -78,7 +76,7 @@ if __name__ == '__main__':
         print('Directory not found.')
         print("Error out instructions")
         quit()
-    
+
     Example = sys.argv[1]
 
     # Multuprocessing: Pass the file list to workers to complete

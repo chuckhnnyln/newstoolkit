@@ -18,7 +18,8 @@ def OcrThePdf(Target):
     FinalPath = FilePath + '.pdf'
     if not os.path.exists(FinalPath):
         print(f'Starting {Target}')
-        Command = "ocrmypdf --clean --force-ocr --image-dpi 300 --output-type pdf --optimize 0 --fast-web-view 0 '" + Target + "' '" +  FinalPath + "'"
+        Command = "ocrmypdf --clean --image-dpi 300 --output-type pdf --optimize 0 --fast-web-view 0 '" + Target + "' '" +  FinalPath + "'"
+        #Command = "ocrmypdf --clean --force-ocr --image-dpi 300 --output-type pdf --optimize 0 --fast-web-view 0 '" + Target + "' '" +  FinalPath + "'"
         #print(Command)
         os.system(Command)
     else:

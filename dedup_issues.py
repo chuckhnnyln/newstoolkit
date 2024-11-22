@@ -4,12 +4,23 @@ import requests
 import xmltodict
 import sys
 import shutil
+import subprocess
 
 def VeridianIssues(XMLSource):
     # Retrieve Issue list from Veridian for a title.
     VeridianList = []
-    resp = requests.get(XMLSource)
-    VeridData = xmltodict.parse(resp.content)
+
+    #Clunky ass work-around for 403 error (Cloudflare?)
+    FileName = "NYSHN_issue-list.xml"
+    if os.path.exists('/usr/local/bin/wget'):
+        Command = ['/usr/local/bin/wget', '-O', FileName, XMLSource]
+    if os.path.exists('/opt/homebrew/bin/wget'):
+        Command = ['/opt/homebrew/bin/wget', '-O', FileName, XMLSource]
+    result = subprocess.run(Command, capture_output=True, text=True)
+
+    with open(FileName) as fd:
+        VeridData = xmltodict.parse(fd.read())
+
     try:
         Dates = VeridData["VeridianXMLResponse"]["DatesResponse"]["ArrayOfDate"]["Date"]
         for item in Dates:
@@ -24,7 +35,7 @@ def BuildDirList(SourceFolder):
         for item in dirs:
             DirList.append(item)
     return DirList
-    
+
 if __name__ == '__main__':
 
     if len(sys.argv) < 2:
